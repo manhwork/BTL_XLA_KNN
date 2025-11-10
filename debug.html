@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Hệ Thống Phát Hiện Vượt Đèn Đỏ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .violation-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-4">
+    <h1 class="text-2xl font-bold mb-4">Debug - Hệ Thống Phát Hiện Vượt Đèn Đỏ</h1>
+
+    <div class="debug-info">
+        <h2>Debug Information:</h2>
+        <div id="debug-log">Loading...</div>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Danh Sách Vi Phạm</h2>
+        <div id="violations-container">
+            <p>Đang tải dữ liệu...</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('Debug script starting...');
+
+        function generateSampleData() {
+            console.log('Generating sample data...');
+            return [
+                {
+                    id: 1,
+                    licensePlate: "30A-12345",
+                    time: "2024-11-10T14:30:15",
+                    location: "Ngã tư Nguyễn Huệ - Lê Lợi",
+                    speed: "45 km/h",
+                    fine: "800,000 VND",
+                    vehicle: {
+                        brand: "Toyota",
+                        color: "Trắng",
+                        type: "Ô tô con",
+                        year: "2020",
+                    },
+                    owner: {
+                        name: "Nguyễn Văn An",
+                        dob: "15/03/1985",
+                        address: "123 Đường ABC, Quận 1, TP.HCM",
+                    },
+                    status: "Chưa xử lý",
+                },
+                {
+                    id: 2,
+                    licensePlate: "59B-98765",
+                    time: "2024-11-10T14:25:32",
+                    location: "Đường Pasteur, Quận 3",
+                    speed: "52 km/h",
+                    fine: "1,200,000 VND",
+                    vehicle: {
+                        brand: "Honda",
+                        color: "Đen",
+                        type: "Xe máy",
+                        year: "2019",
+                    },
+                    owner: {
+                        name: "Trần Thị Bình",
+                        dob: "22/07/1990",
+                        address: "456 Đường XYZ, Quận 3, TP.HCM",
+                    },
+                    status: "Đã xử lý",
+                }
+            ];
+        }
+
+        function createViolationCard(violation) {
+            const time = new Date(violation.time);
+            const timeStr = time.toLocaleString("vi-VN");
+
+            return `
+                <div class="violation-item">
+                    <h3 class="font-bold text-lg">${violation.licensePlate}</h3>
+                    <p><strong>Địa điểm:</strong> ${violation.location}</p>
+                    <p><strong>Thời gian:</strong> ${timeStr}</p>
+                    <p><strong>Tốc độ:</strong> ${violation.speed}</p>
+                    <p><strong>Tiền phạt:</strong> ${violation.fine}</p>
+                    <p><strong>Trạng thái:</strong> ${violation.status}</p>
+                    <p><strong>Chủ xe:</strong> ${violation.owner.name}</p>
+                    <p><strong>Xe:</strong> ${violation.vehicle.brand} ${violation.vehicle.color} ${violation.vehicle.year}</p>
+                </div>
+            `;
+        }
+
+        function renderViolations() {
+            console.log('Starting renderViolations...');
+            const container = document.getElementById('violations-container');
+            const debugLog = document.getElementById('debug-log');
+
+            if (!container) {
+                console.error('Container not found!');
+                return;
+            }
+
+            // Generate data
+            const violations = generateSampleData();
+            console.log('Generated violations:', violations);
+
+            // Update debug log
+            debugLog.innerHTML = `
+                <p>✅ Data generated: ${violations.length} violations</p>
+                <p>✅ Container found: ${container ? 'Yes' : 'No'}</p>
+                <p>✅ JavaScript working: Yes</p>
+                <p>Timestamp: ${new Date().toLocaleString()}</p>
+            `;
+
+            // Render violations
+            if (violations.length === 0) {
+                container.innerHTML = '<p>Không có dữ liệu vi phạm</p>';
+                return;
+            }
+
+            let html = '';
+            violations.forEach(violation => {
+                html += createViolationCard(violation);
+            });
+
+            container.innerHTML = html;
+            console.log('Violations rendered successfully');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM Content Loaded');
+            setTimeout(renderViolations, 100);
+        });
+
+        // Also try immediate execution
+        renderViolations();
+    </script>
+</body>
+
+</html>

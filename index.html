@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Phát Hiện Vượt Đèn Đỏ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-container:hover .video-overlay {
+            opacity: 1;
+        }
+
+        .violation-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .violation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .violation-card:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-video text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Hệ Thống Phát Hiện Vượt Đèn Đỏ</h1>
+                        <p class="text-sm text-gray-500">Giám sát giao thông thông minh</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm font-medium text-gray-900" id="current-time"></div>
+                        <div class="text-xs text-gray-500" id="current-date"></div>
+                    </div>
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-circle text-white text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
+            <!-- Video Section -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 h-full">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-play-circle mr-2 text-blue-600"></i>
+                            Video Giám Sát
+                        </h2>
+                    </div>
+                    <div class="p-4 h-[calc(100%-80px)]">
+                        <div class="video-container h-full bg-gray-900 rounded-lg overflow-hidden relative">
+                            <!-- Video Element -->
+                            <video id="surveillance-video" class="w-full h-full object-cover" loop muted
+                                poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik01MCA2MEw3NSAzNUw1MCAzMFY2MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=">
+                                <source src="" type="video/mp4">
+                                Trình duyệt không hỗ trợ video.
+                            </video>
+
+                            <!-- Video Overlay -->
+                            <div class="video-overlay" id="video-overlay">
+                                <div class="text-center text-white">
+                                    <button id="play-pause-btn"
+                                        class="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-4 mb-4 transition-all">
+                                        <i class="fas fa-play text-2xl" id="play-pause-icon"></i>
+                                    </button>
+                                    <p class="text-sm font-medium">Nhấn để phát video</p>
+                                </div>
+                            </div>
+
+                            <!-- Video Controls -->
+                            <div class="absolute bottom-4 left-4 right-4">
+                                <div class="bg-black bg-opacity-50 rounded-lg p-3">
+                                    <div class="flex items-center space-x-3">
+                                        <button id="main-play-pause"
+                                            class="text-white hover:text-blue-400 transition-colors">
+                                            <i class="fas fa-play text-lg" id="main-play-icon"></i>
+                                        </button>
+                                        <div class="flex-1">
+                                            <div class="w-full h-1 bg-gray-600 rounded-full">
+                                                <div class="h-1 bg-blue-500 rounded-full" style="width: 0%"
+                                                    id="progress-bar"></div>
+                                            </div>
+                                        </div>
+                                        <span class="text-white text-xs" id="video-time">00:00 / 00:00</span>
+                                        <button class="text-white hover:text-blue-400 transition-colors">
+                                            <i class="fas fa-volume-up text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-list mr-2 text-green-600"></i>
+                            Danh Sách Vi Phạm
+                        </h2>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm biển số</label>
+                                <input type="text" id="search-input" placeholder="Nhập biển số xe..."
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Lọc theo thời gian</label>
+                                <select id="time-filter"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="all">Tất cả</option>
+                                    <option value="today">Hôm nay</option>
+                                    <option value="week">Tuần này</option>
+                                    <option value="month">Tháng này</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Violations List -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div class="space-y-3" id="violations-list">
+                            <!-- Violation items will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Loading indicator -->
+                        <div class="text-center py-8" id="loading-indicator" style="display: none;">
+                            <div class="loading mx-auto mb-2"></div>
+                            <p class="text-sm text-gray-500">Đang tải dữ liệu...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="detail-modal">
+        <div class="modal-content">
+            <div class="p-6">
+                <!-- Modal Header -->
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Chi Tiết Vi Phạm</h2>
+                        <p class="text-sm text-gray-500" id="modal-license-plate">Biển số: ---</p>
+                    </div>
+                    <button id="close-modal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column: Vehicle Image & Basic Info -->
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Ảnh Vi Phạm</h3>
+                            <div class="bg-gray-100 rounded-lg overflow-hidden">
+                                <img id="violation-image" src="" alt="Ảnh vi phạm" class="w-full h-64 object-cover">
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Thông Tin Vi Phạm</h3>
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Thời gian:</span>
+                                    <span class="font-medium" id="violation-time">---</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Địa điểm:</span>
+                                    <span class="font-medium" id="violation-location">---</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Tốc độ:</span>
+                                    <span class="font-medium" id="violation-speed">---</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Mức phạt:</span>
+                                    <span class="font-medium text-red-600" id="violation-fine">---</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Vehicle & Owner Info -->
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Thông Tin Phương Tiện</h3>
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Hãng xe:</span>
+                                    <span class="font-medium" id="vehicle-brand">---</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Màu sắc:</span>
+                                    <span class="font-medium" id="vehicle-color">---</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Loại xe:</span>
+                                    <span class="font-medium" id="vehicle-type">---</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Năm sản xuất:</span>
+                                    <span class="font-medium" id="vehicle-year">---</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Thông Tin Chủ Sở Hữu</h3>
+                            <div class="space-y-4">
+                                <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Họ tên:</span>
+                                        <span class="font-medium" id="owner-name">---</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Ngày sinh:</span>
+                                        <span class="font-medium" id="owner-dob">---</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Địa chỉ:</span>
+                                        <span class="font-medium text-right" id="owner-address">---</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Ảnh chân dung</h4>
+                                    <div class="bg-gray-100 rounded-lg overflow-hidden w-32 h-40 mx-auto">
+                                        <img id="owner-photo" src="" alt="Ảnh chân dung"
+                                            class="w-full h-full object-cover">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                        <i class="fas fa-download mr-2"></i>
+                        Tải về
+                    </button>
+                    <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>
+                        In biên bản
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
